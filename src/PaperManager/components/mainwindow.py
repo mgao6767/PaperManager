@@ -6,8 +6,8 @@ from PyQt6.QtCore import Qt, QUrl, QThreadPool
 
 from .pdf_viewer.pdfviewer import PDFViewer
 from .filesystem_viewer.fsviewer import FSViewer
-
 from .signals import PMCommunicate
+from .database import PMDatabase, Settings
 
 
 class PMMainWindow(QMainWindow):
@@ -19,6 +19,7 @@ class PMMainWindow(QMainWindow):
         self.pool = QThreadPool.globalInstance()
         self.fsviewer = FSViewer(parent=self, comm=self.comm)
         self.pdfviewer = PDFViewer(parent=self, comm=self.comm)
+        self.db = PMDatabase()
 
         # Setup layout, menu, etc.
         self.setup()
@@ -29,7 +30,7 @@ class PMMainWindow(QMainWindow):
         self.setWindowTitle(f"PaperManager")
         self.setCentralWidget(self.fsviewer)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.pdfviewer)
-        self.fsviewer.set_dir("./examples")
+        self.fsviewer.set_dir(self.db.get_setting(Settings.LastDirectory))
 
     def create_menu(self) -> None:
         menuBar = self.menuBar()
@@ -50,7 +51,7 @@ class PMMainWindow(QMainWindow):
         ]
         fileMenu.addActions(fileMenuActions)
         openAction.triggered.connect(self.open_dir)
-        quitAction.triggered.connect(self.close)
+        quitAction.triggered.connect(self._close)
 
         # Edit menu actions
 
@@ -75,6 +76,12 @@ class PMMainWindow(QMainWindow):
         helpMenu.addAction(helpQtAction)
         helpAction.triggered.connect(self.act_open_homepage)
         helpQtAction.triggered.connect(lambda: QMessageBox.aboutQt(self, "About Qt"))
+
+    def _close(self):
+        # Close database
+        self.db.close()
+        # Close main window
+        return self.close()
 
     def connect_signals(self) -> None:
         self.comm.open_pdf.connect(self.act_load_pdf)
@@ -111,6 +118,7 @@ class PMMainWindow(QMainWindow):
             return
         # Set project directory and try to load data, if any
         self.fsviewer.set_dir(self.curr_dir)
+        self.db.set_setting(Settings.LastDirectory, self.curr_dir)
 
     def show_message_box(
         self,
