@@ -14,7 +14,7 @@ authors = [
 description = ""
 readme = "README.md"
 license = { file="LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dependencies = [
   "PyQt6==6.4.0",
   "PyMuPDF==1.21.0",
