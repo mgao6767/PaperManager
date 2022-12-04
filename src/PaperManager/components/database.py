@@ -50,7 +50,7 @@ class PMDatabase:
             """
         CREATE TABLE IF NOT EXISTS Papers (
             id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-            name TEXT NOT NULL
+            name TEXT UNIQUE NOT NULL
         )
         """
         )
@@ -135,7 +135,7 @@ class PMDatabase:
                 continue
             query.prepare(
                 """
-            INSERT OR REPLACE INTO Papers(name) VALUES(?)
+            INSERT INTO Papers(name) VALUES(?)
             """
             )
             query.addBindValue(file)
@@ -146,7 +146,7 @@ class PMDatabase:
                 query = QSqlQuery(self.db)
                 query.prepare(
                     """
-                INSERT OR REPLACE INTO PaperPaths(paperId,path,deviceMacAddr) 
+                INSERT INTO PaperPaths(paperId,path,deviceMacAddr) 
                 VALUES(?,?,?)
                 """
                 )
