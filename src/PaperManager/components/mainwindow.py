@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt, QUrl, QThreadPool
 
 from .pdf_viewer.pdfviewer import PDFViewer
 from .filesystem_viewer.fsviewer import FSViewer
+from .filesystem_viewer.tagviewer import TagViewer
 from .signals import PMCommunicate
 from .database import PMDatabase, Settings
 
@@ -17,9 +18,10 @@ class PMMainWindow(QMainWindow):
         self.curr_dir: typing.Optional[str] = None
         self.comm = PMCommunicate()
         self.pool = QThreadPool.globalInstance()
+        self.db = PMDatabase()
         self.fsviewer = FSViewer(parent=self, comm=self.comm)
         self.pdfviewer = PDFViewer(parent=self, comm=self.comm)
-        self.db = PMDatabase()
+        self.tagviewer = TagViewer(parent=self, comm=self.comm)
 
         # Setup layout, menu, etc.
         self.setup()
@@ -29,6 +31,7 @@ class PMMainWindow(QMainWindow):
     def setup(self) -> None:
         self.setWindowTitle(f"PaperManager")
         self.setCentralWidget(self.fsviewer)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.tagviewer)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.pdfviewer)
         self.fsviewer.set_dir(self.db.get_setting(Settings.LastDirectory))
 
