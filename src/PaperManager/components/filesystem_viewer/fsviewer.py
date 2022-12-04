@@ -1,3 +1,5 @@
+import pathlib
+
 from PyQt6.QtWidgets import QDockWidget, QTreeView, QHeaderView
 from PyQt6.QtGui import QFileSystemModel, QColor
 from PyQt6.QtCore import QDir, Qt, QModelIndex
@@ -87,4 +89,5 @@ class FSViewer(QDockWidget):
         Args:
             path (str): directory path
         """
-        self.treeView.setRootIndex(self.fsmodel.index(path))
+        p = pathlib.Path(path).resolve().as_posix()
+        self.treeView.setRootIndex(self.fsmodel.index(p))
