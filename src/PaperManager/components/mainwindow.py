@@ -8,6 +8,7 @@ from .pdf_viewer.pdfviewer import PDFViewer
 from .filesystem_viewer.fsviewer import FSViewer
 from .filesystem_viewer.tagviewer import TagViewer
 from .signals import PMCommunicate
+from .tasks import PMUpdateDirectory
 from .database import PMDatabase, Settings
 
 
@@ -122,6 +123,9 @@ class PMMainWindow(QMainWindow):
         # Set project directory and try to load data, if any
         self.fsviewer.set_dir(self.curr_dir)
         self.db.set_setting(Settings.LastDirectory, self.curr_dir)
+        # Add all pdfs in the directory to database
+        task = PMUpdateDirectory(self.comm, self.db, self.curr_dir)
+        self.pool.start(task)
 
     def show_message_box(
         self,

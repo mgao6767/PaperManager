@@ -1,4 +1,7 @@
+import os
+from pathlib import Path
 from enum import Enum
+from uuid import getnode as getMacAddr
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 
 
@@ -39,7 +42,7 @@ class PMDatabase:
             """
         CREATE TABLE IF NOT EXISTS Tags (
             id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-            name TEXT NOT NULL
+            name TEXT UNIQUE NOT NULL
         )
         """
         )
@@ -56,7 +59,7 @@ class PMDatabase:
         CREATE TABLE IF NOT EXISTS PaperPaths (
             paperId INTEGER NOT NULL,
             path TEXT NOT NULL,
-            platform TEXT NOT NULL,
+            deviceMacAddr TEXT NOT NULL,
             FOREIGN KEY (paperId) REFERENCES Papers(id)
         )
         """
@@ -121,3 +124,33 @@ class PMDatabase:
         query.addBindValue(value)
         query.exec()
         query.finish()
+
+    def update_dir(self, directory_path: str):
+        deviceMacAddr = hex(getMacAddr())
+        root, _, files = next(os.walk(directory_path))
+        query = QSqlQuery(self.db)
+
+        for file in files:
+            if "pdf" not in file.lower():
+                continue
+            query.prepare(
+                """
+            INSERT OR REPLACE INTO Papers(name) VALUES(?)
+            """
+            )
+            query.addBindValue(file)
+            query.exec()
+            paperId = query.lastInsertId()
+            if paperId:
+                pdf_path = Path(os.path.join(root, file)).resolve().as_posix()
+                query = QSqlQuery(self.db)
+                query.prepare(
+                    """
+                INSERT OR REPLACE INTO PaperPaths(paperId,path,deviceMacAddr) 
+                VALUES(?,?,?)
+                """
+                )
+                query.addBindValue(paperId)
+                query.addBindValue(pdf_path)
+                query.addBindValue(deviceMacAddr)
+                query.exec()
