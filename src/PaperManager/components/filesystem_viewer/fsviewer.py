@@ -1,6 +1,13 @@
 import pathlib
 
-from PyQt6.QtWidgets import QDockWidget, QTreeView, QHeaderView
+from PyQt6.QtWidgets import (
+    QDockWidget,
+    QTreeView,
+    QHeaderView,
+    QLineEdit,
+    QVBoxLayout,
+    QWidget,
+)
 from PyQt6.QtGui import QFileSystemModel, QColor
 from PyQt6.QtCore import QDir, Qt, QModelIndex
 
@@ -59,9 +66,10 @@ class FSModel(QFileSystemModel):
 
 
 class FSViewer(QDockWidget):
-    def __init__(self, parent, comm, *args, **kwargs) -> None:
+    def __init__(self, parent, comm, db, *args, **kwargs) -> None:
         super().__init__("File System", parent, *args, **kwargs)
         self.comm = comm
+        self.db = db
         self.setAllowedAreas(Qt.DockWidgetArea.AllDockWidgetAreas)
         self.setFeatures(
             QDockWidget.DockWidgetFeature.DockWidgetMovable
@@ -81,7 +89,22 @@ class FSViewer(QDockWidget):
             0, QHeaderView.ResizeMode.ResizeToContents
         )
         self.treeView.setAlternatingRowColors(True)
-        self.setWidget(self.treeView)
+        self.w = QWidget(self)
+        self.w.setLayout(QVBoxLayout(self.w))
+        self.lineEdit = QLineEdit(self)
+        self.w.layout().addWidget(self.lineEdit)
+        self.w.layout().addWidget(self.treeView)
+        self.setWidget(self.w)
+
+        self.connect_signals()
+
+    def connect_signals(self):
+        # Once a paper is selected, get its tags from the db
+        self.comm.open_pdf.connect(self.get_paper_tags)
+
+    def get_paper_tags(self, paper_path: str):
+        tags = self.db.get_paper_tags(paper_path)
+        self.lineEdit.setText(", ".join(tags))
 
     def set_dir(self, path: str) -> None:
         """Update the filesystem TreeView to show the given directory path

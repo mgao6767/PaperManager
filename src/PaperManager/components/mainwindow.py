@@ -19,7 +19,7 @@ class PMMainWindow(QMainWindow):
         self.comm = PMCommunicate()
         self.pool = QThreadPool.globalInstance()
         self.db = PMDatabase()
-        self.fsviewer = FSViewer(parent=self, comm=self.comm)
+        self.fsviewer = FSViewer(parent=self, comm=self.comm, db=self.db)
         self.pdfviewer = PDFViewer(parent=self, comm=self.comm)
         self.tagviewer = TagViewer(parent=self, comm=self.comm)
 

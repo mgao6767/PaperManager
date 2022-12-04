@@ -1,5 +1,5 @@
 from enum import Enum
-from PyQt6.QtSql import QSqlDatabase, QSqlQuery, QSql
+from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 
 
 class Settings(str, Enum):
@@ -53,6 +53,16 @@ class PMDatabase:
         )
         createTableQuery.exec(
             """
+        CREATE TABLE IF NOT EXISTS PaperPaths (
+            paperId INTEGER NOT NULL,
+            path TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            FOREIGN KEY (paperId) REFERENCES Papers(id)
+        )
+        """
+        )
+        createTableQuery.exec(
+            """
         CREATE TABLE IF NOT EXISTS PaperTags (
             paperId INTEGER NOT NULL,
             tagId INTEGER NOT NULL,
@@ -63,6 +73,23 @@ class PMDatabase:
         """
         )
         createTableQuery.finish()
+
+    def get_paper_tags(self, paper_path: str):
+        query = QSqlQuery(self.db)
+        query.prepare(
+            """
+        SELECT DISTINCT Tags.name FROM Papers, PaperPaths, PaperTags, Tags
+        WHERE PaperPaths.path=? AND PaperPaths.paperId=Papers.id
+        AND PaperTags.paperId=Papers.id AND PaperTags.tagId=Tags.id
+        """
+        )
+        query.addBindValue(paper_path)
+        query.exec()
+        tags = []
+        while query.next():
+            tags.append(query.value(0))
+        query.finish()
+        return tags
 
     def get_setting(self, key: Settings):
         """Get the value of setting from database"""
