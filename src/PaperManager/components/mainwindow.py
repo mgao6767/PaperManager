@@ -89,6 +89,7 @@ class PMMainWindow(QMainWindow):
 
     def connect_signals(self) -> None:
         self.comm.open_pdf.connect(self.act_load_pdf)
+        self.comm.tags_updated.connect(self.tagviewer.refresh)
 
     def check_directory_set(func: typing.Callable):
         """Dectorator to check if the current directory is set

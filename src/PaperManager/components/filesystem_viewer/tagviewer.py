@@ -25,3 +25,7 @@ class TagViewer(QDockWidget):
         self.view = QTreeView(self)
         self.view.setModel(self.model)
         self.setWidget(self.view)
+
+    def refresh(self):
+        # Refresh the view by executing again the query
+        self.model.setQuery(self.model.query().executedQuery())

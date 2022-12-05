@@ -73,8 +73,9 @@ class FSModel(QFileSystemModel):
 class TagBar(QWidget):
     # https://robonobodojo.wordpress.com/2018/09/11/creating-a-tag-bar-in-pyside/
 
-    def __init__(self, parent):
+    def __init__(self, parent, comm: PMCommunicate):
         super().__init__(parent)
+        self.comm = comm
         self.tags = []
         self.h_layout = QHBoxLayout()
         self.h_layout.setSpacing(4)
@@ -111,6 +112,7 @@ class TagBar(QWidget):
             self.add_tag_to_bar(tag)
         self.h_layout.addWidget(self.line_edit)
         self.line_edit.setFocus()
+        self.comm.tags_updated.emit()
 
     def add_tag_to_bar(self, text):
         tag = QFrame()
@@ -171,7 +173,7 @@ class FSViewer(QDockWidget):
         self.treeView.setAlternatingRowColors(True)
         self.w = QWidget(self)
         self.w.setLayout(QVBoxLayout(self.w))
-        self.tagbar = TagBar(self)
+        self.tagbar = TagBar(self, comm)
         self.w.layout().addWidget(self.tagbar)
         self.w.layout().addWidget(self.treeView)
         self.setWidget(self.w)
