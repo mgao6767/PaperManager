@@ -65,7 +65,6 @@ class FSModel(QFileSystemModel):
                     if role == Qt.ItemDataRole.DecorationRole:
                         pass
                     elif role == Qt.ItemDataRole.DisplayRole:
-                        # TODO: crash, too many sql trans
                         return ", ".join(self.db.get_paper_tags(path))
                     elif role == Qt.ItemDataRole.ForegroundRole:
                         return QColor("blue")
@@ -110,6 +109,7 @@ class TagBar(QWidget):
         self.tags.sort(key=lambda x: x.lower())
         if self.curr_filepath:
             self.db.set_paper_tags(self.curr_filepath, self.tags)
+            self.db.update_paper_tags()
         self.refresh()
 
     def refresh(self):
