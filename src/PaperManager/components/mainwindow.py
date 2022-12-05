@@ -170,6 +170,8 @@ class PMMainWindow(QMainWindow):
         self.fsviewer.show()
         self.pdfviewer.show()
         self.setCentralWidget(self.fsviewer)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.tagviewer)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.fileviewer)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.pdfviewer)
 
     def act_enter_zen_mode(self) -> None:
