@@ -141,7 +141,7 @@ class PMDatabase:
             if query.next():
                 paperId = query.value(0)
             else:
-                return
+                continue
             for tag in tags:
                 query.prepare(
                     """
@@ -201,37 +201,36 @@ class PMDatabase:
 
     def update_dir(self, directory_path: str):
         deviceMacAddr = hex(getMacAddr())
-        root, _, files = next(os.walk(directory_path))
-        query = QSqlQuery(self.db)
-
-        for file in files:
-            if "pdf" not in file.lower():
-                continue
-            query.prepare(
-                """
-            INSERT INTO Papers(name) VALUES(?)
-            """
-            )
-            query.addBindValue(file)
-            query.exec()
-            paperId = query.lastInsertId()
-            # Paper name already in databse
-            if paperId is None:
-                query.prepare("SELECT id FROM Papers WHERE name=?")
-                query.addBindValue(file)
-                query.exec()
-                query.next()
-                paperId = query.value(0)
-            if paperId:
-                pdf_path = Path(os.path.join(root, file)).resolve().as_posix()
-                query = QSqlQuery(self.db)
+        for root, dirs, files in os.walk(directory_path):
+            query = QSqlQuery(self.db)
+            for file in files:
+                if "pdf" not in file.lower():
+                    continue
                 query.prepare(
                     """
-                INSERT INTO PaperPaths(paperId,path,deviceMacAddr) 
-                VALUES(?,?,?)
+                INSERT INTO Papers(name) VALUES(?)
                 """
                 )
-                query.addBindValue(paperId)
-                query.addBindValue(pdf_path)
-                query.addBindValue(deviceMacAddr)
+                query.addBindValue(file)
                 query.exec()
+                paperId = query.lastInsertId()
+                # Paper name already in databse
+                if paperId is None:
+                    query.prepare("SELECT id FROM Papers WHERE name=?")
+                    query.addBindValue(file)
+                    query.exec()
+                    query.next()
+                    paperId = query.value(0)
+                if paperId:
+                    pdf_path = Path(os.path.join(root, file)).resolve().as_posix()
+                    query = QSqlQuery(self.db)
+                    query.prepare(
+                        """
+                    INSERT INTO PaperPaths(paperId,path,deviceMacAddr) 
+                    VALUES(?,?,?)
+                    """
+                    )
+                    query.addBindValue(paperId)
+                    query.addBindValue(pdf_path)
+                    query.addBindValue(deviceMacAddr)
+                    query.exec()
