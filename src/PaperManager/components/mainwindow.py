@@ -38,7 +38,7 @@ class PMMainWindow(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.fileviewer)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.pdfviewer)
         self.curr_dir = self.db.get_setting(Settings.LastDirectory)
-        self.fsviewer.set_dir(self.curr_dir)
+        self.set_dir()
 
     def create_menu(self) -> None:
         menuBar = self.menuBar()
@@ -111,6 +111,14 @@ class PMMainWindow(QMainWindow):
 
         return inner
 
+    def set_dir(self):
+        # Set project directory and try to load data, if any
+        self.fsviewer.set_dir(self.curr_dir)
+        self.db.set_setting(Settings.LastDirectory, self.curr_dir)
+        # Add all pdfs in the directory to database
+        task = PMUpdateDirectory(self.comm, self.db, self.curr_dir)
+        self.pool.start(task)
+
     def open_dir(self):
         """Prompt the user to select directory"""
         # Defaults to the current directory
@@ -126,12 +134,7 @@ class PMMainWindow(QMainWindow):
             msg = f"Cannot open the directory:\n{self.curr_dir}"
             self.show_message_box(msg, QMessageBox.Icon.Critical)
             return
-        # Set project directory and try to load data, if any
-        self.fsviewer.set_dir(self.curr_dir)
-        self.db.set_setting(Settings.LastDirectory, self.curr_dir)
-        # Add all pdfs in the directory to database
-        task = PMUpdateDirectory(self.comm, self.db, self.curr_dir)
-        self.pool.start(task)
+        self.set_dir()
 
     def show_message_box(
         self,

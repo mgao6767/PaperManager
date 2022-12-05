@@ -204,7 +204,7 @@ class PMDatabase:
         for root, dirs, files in os.walk(directory_path):
             query = QSqlQuery(self.db)
             for file in files:
-                if "pdf" not in file.lower():
+                if not file.lower().endswith(".pdf"):
                     continue
                 query.prepare(
                     """

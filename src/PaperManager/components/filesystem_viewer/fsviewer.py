@@ -27,10 +27,14 @@ class FSTreeView(QTreeView):
         self.comm = comm
 
     def currentChanged(self, current, previous):
-        if not current:
+        if not current.isValid():
             return
-        selected_file_path = self.model().filePath(current)
-        self.comm.open_pdf.emit(selected_file_path)
+        selected_file_path: str = self.model().filePath(current)
+        if selected_file_path.lower().endswith(".pdf"):
+            self.comm.open_pdf.emit(selected_file_path)
+            self.comm.pdf_selected.emit(True)
+        else:
+            self.comm.pdf_selected.emit(False)
         super().currentChanged(current, previous)
 
 
@@ -86,6 +90,7 @@ class TagBar(QWidget):
         self.h_layout.setSpacing(4)
         self.setLayout(self.h_layout)
         self.line_edit = QLineEdit()
+        self.comm.pdf_selected.connect(self.setEnabled)
         self.autocompleteModel = QStandardItemModel()
         self.completer = QCompleter()
         self.completer.setModel(self.autocompleteModel)
@@ -107,6 +112,12 @@ class TagBar(QWidget):
 
     def setup_ui(self):
         self.line_edit.returnPressed.connect(self.create_tags)
+
+    def setEnabled(self, enabled: bool):
+        if not enabled:
+            self.tags.clear()
+            self.refresh()
+        self.line_edit.setEnabled(enabled)
 
     def update_completer(self):
         all_tags = []
