@@ -1,5 +1,6 @@
 import os
 import typing
+from pathlib import Path
 from PyQt6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 from PyQt6.QtGui import QActionGroup, QAction, QDesktopServices, QKeySequence
 from PyQt6.QtCore import Qt, QUrl, QThreadPool
@@ -113,7 +114,7 @@ class PMMainWindow(QMainWindow):
 
     def set_dir(self):
         # Set project directory and try to load data, if any
-        self.fsviewer.set_dir(self.curr_dir)
+        self.fsviewer.set_dir(Path(self.curr_dir).resolve().as_posix())
         self.db.set_setting(Settings.LastDirectory, self.curr_dir)
         # Add all pdfs in the directory to database
         task = PMUpdateDirectory(self.comm, self.db, self.curr_dir)
