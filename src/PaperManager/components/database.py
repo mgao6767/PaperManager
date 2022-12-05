@@ -65,6 +65,7 @@ class PMDatabase:
             paperId INTEGER NOT NULL,
             path TEXT NOT NULL,
             deviceMacAddr TEXT NOT NULL,
+            PRIMARY KEY (paperId,path),
             FOREIGN KEY (paperId) REFERENCES Papers(id)
         )
         """

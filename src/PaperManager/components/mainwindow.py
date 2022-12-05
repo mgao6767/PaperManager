@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt, QUrl, QThreadPool
 
 from .pdf_viewer.pdfviewer import PDFViewer
 from .filesystem_viewer.fsviewer import FSViewer
+from .filesystem_viewer.fileviewer import FileViewer
 from .filesystem_viewer.tagviewer import TagViewer
 from .signals import PMCommunicate
 from .tasks import PMUpdateDirectory
@@ -21,6 +22,7 @@ class PMMainWindow(QMainWindow):
         self.pool = QThreadPool.globalInstance()
         self.db = PMDatabase()
         self.fsviewer = FSViewer(parent=self, comm=self.comm, db=self.db)
+        self.fileviewer = FileViewer(parent=self, comm=self.comm)
         self.pdfviewer = PDFViewer(parent=self, comm=self.comm)
         self.tagviewer = TagViewer(parent=self, comm=self.comm)
 
@@ -33,8 +35,10 @@ class PMMainWindow(QMainWindow):
         self.setWindowTitle(f"PaperManager")
         self.setCentralWidget(self.fsviewer)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.tagviewer)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.fileviewer)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.pdfviewer)
-        self.fsviewer.set_dir(self.db.get_setting(Settings.LastDirectory))
+        self.curr_dir = self.db.get_setting(Settings.LastDirectory)
+        self.fsviewer.set_dir(self.curr_dir)
 
     def create_menu(self) -> None:
         menuBar = self.menuBar()
@@ -90,6 +94,7 @@ class PMMainWindow(QMainWindow):
     def connect_signals(self) -> None:
         self.comm.open_pdf.connect(self.act_load_pdf)
         self.comm.tags_updated.connect(self.tagviewer.refresh)
+        self.comm.tags_updated.connect(self.fileviewer.refresh)
 
     def check_directory_set(func: typing.Callable):
         """Dectorator to check if the current directory is set

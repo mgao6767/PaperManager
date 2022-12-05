@@ -109,7 +109,7 @@ class TagBar(QWidget):
         self.tags.sort(key=lambda x: x.lower())
         if self.curr_filepath:
             self.db.set_paper_tags(self.curr_filepath, self.tags)
-            self.db.update_paper_tags()
+        self.db.update_paper_tags()
         self.refresh()
 
     def refresh(self):
