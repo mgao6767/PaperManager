@@ -12,8 +12,9 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QCompleter,
 )
-from PyQt6.QtGui import QFileSystemModel, QColor
+from PyQt6.QtGui import QFileSystemModel, QColor, QStandardItem, QStandardItemModel
 from PyQt6.QtCore import QDir, Qt, QModelIndex
 
 from ..database import PMDatabase
@@ -85,6 +86,15 @@ class TagBar(QWidget):
         self.h_layout.setSpacing(4)
         self.setLayout(self.h_layout)
         self.line_edit = QLineEdit()
+        self.autocompleteModel = QStandardItemModel()
+        self.completer = QCompleter()
+        self.completer.setModel(self.autocompleteModel)
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.line_edit.setCompleter(self.completer)
+        self.update_completer()
+        self.line_edit.setPlaceholderText(
+            "Add tag(s)... Multiple tags separated by ', ' allowed."
+        )
         self.line_edit.setSizePolicy(
             QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum
         )
@@ -97,6 +107,14 @@ class TagBar(QWidget):
 
     def setup_ui(self):
         self.line_edit.returnPressed.connect(self.create_tags)
+
+    def update_completer(self):
+        all_tags = []
+        for tags in self.db.paperTags.values():
+            all_tags.extend(tags)
+        self.autocompleteModel.clear()
+        for tag in set(all_tags):
+            self.autocompleteModel.appendRow(QStandardItem(tag))
 
     def create_tags(self):
         if self.line_edit.text():
@@ -120,6 +138,7 @@ class TagBar(QWidget):
             self.add_tag_to_bar(tag)
         self.h_layout.addWidget(self.line_edit)
         self.line_edit.setFocus()
+        self.update_completer()
         self.comm.tags_updated.emit()
 
     def add_tag_to_bar(self, text):
