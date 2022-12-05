@@ -95,6 +95,45 @@ class PMDatabase:
         query.finish()
         return tags
 
+    def set_paper_tags(self, paper_path: str, tags: list):
+        query = QSqlQuery(self.db)
+        query.prepare(
+            """
+        SELECT DISTINCT paperId FROM PaperPaths WHERE path=? 
+        """
+        )
+        query.addBindValue(paper_path)
+        query.exec()
+        if query.next():
+            paperId = query.value(0)
+        else:
+            return
+        for tag in tags:
+            query.prepare(
+                """
+            INSERT INTO Tags(name) VALUES (?)
+            """
+            )
+            query.addBindValue(tag)
+            query.exec()
+            tagId = query.lastInsertId()
+            # Tag already in database
+            if tagId is None:
+                query.prepare("SELECT id FROM Tags WHERE name=?")
+                query.addBindValue(tag)
+                query.exec()
+                query.next()
+                tagId = query.value(0)
+            query.prepare(
+                """
+            INSERT INTO PaperTags(paperId,tagId) VALUES (?,?)
+            """
+            )
+            query.addBindValue(paperId)
+            query.addBindValue(tagId)
+            query.exec()
+        query.finish()
+
     def get_setting(self, key: Settings):
         """Get the value of setting from database"""
 
@@ -142,6 +181,13 @@ class PMDatabase:
             query.addBindValue(file)
             query.exec()
             paperId = query.lastInsertId()
+            # Paper name already in databse
+            if paperId is None:
+                query.prepare("SELECT id FROM Papers WHERE name=?")
+                query.addBindValue(file)
+                query.exec()
+                query.next()
+                paperId = query.value(0)
             if paperId:
                 pdf_path = Path(os.path.join(root, file)).resolve().as_posix()
                 query = QSqlQuery(self.db)

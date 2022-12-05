@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFileSystemModel, QColor
 from PyQt6.QtCore import QDir, Qt, QModelIndex
 
+from ..database import PMDatabase
 from ..signals import PMCommunicate
 
 
@@ -33,8 +34,9 @@ class FSTreeView(QTreeView):
 
 
 class FSModel(QFileSystemModel):
-    def __init__(self, parent) -> None:
+    def __init__(self, parent, db: PMDatabase) -> None:
         super().__init__(parent)
+        self.db = db
         # Show only PDF files
         self.setNameFilters(["*.pdf", "*.PDF"])
         self.setNameFilterDisables(False)
@@ -63,7 +65,8 @@ class FSModel(QFileSystemModel):
                     if role == Qt.ItemDataRole.DecorationRole:
                         pass
                     elif role == Qt.ItemDataRole.DisplayRole:
-                        return f"JFE; Open Access;"
+                        # TODO: crash, too many sql trans
+                        return ", ".join(self.db.get_paper_tags(path))
                     elif role == Qt.ItemDataRole.ForegroundRole:
                         return QColor("blue")
         if not isTagCol:
@@ -73,9 +76,11 @@ class FSModel(QFileSystemModel):
 class TagBar(QWidget):
     # https://robonobodojo.wordpress.com/2018/09/11/creating-a-tag-bar-in-pyside/
 
-    def __init__(self, parent, comm: PMCommunicate):
+    def __init__(self, parent, comm: PMCommunicate, db: PMDatabase):
         super().__init__(parent)
         self.comm = comm
+        self.db = db
+        self.curr_filepath = ""
         self.tags = []
         self.h_layout = QHBoxLayout()
         self.h_layout.setSpacing(4)
@@ -103,6 +108,8 @@ class TagBar(QWidget):
         self.tags.extend(new_tags)
         self.tags = list(set(self.tags))
         self.tags.sort(key=lambda x: x.lower())
+        if self.curr_filepath:
+            self.db.set_paper_tags(self.curr_filepath, self.tags)
         self.refresh()
 
     def refresh(self):
@@ -159,7 +166,7 @@ class FSViewer(QDockWidget):
             | QDockWidget.DockWidgetFeature.DockWidgetClosable
         )
 
-        self.fsmodel = FSModel(self)
+        self.fsmodel = FSModel(self, db)
         self.fsmodel.setRootPath(QDir.homePath())
         self.treeView = FSTreeView(self, comm)
         self.treeView.setModel(self.fsmodel)
@@ -173,7 +180,7 @@ class FSViewer(QDockWidget):
         self.treeView.setAlternatingRowColors(True)
         self.w = QWidget(self)
         self.w.setLayout(QVBoxLayout(self.w))
-        self.tagbar = TagBar(self, comm)
+        self.tagbar = TagBar(self, comm, db)
         self.w.layout().addWidget(self.tagbar)
         self.w.layout().addWidget(self.treeView)
         self.setWidget(self.w)
@@ -186,6 +193,7 @@ class FSViewer(QDockWidget):
 
     def get_paper_tags(self, paper_path: str):
         tags = self.db.get_paper_tags(paper_path)
+        self.tagbar.curr_filepath = paper_path
         self.tagbar.tags = tags
         self.tagbar.create_tags()
 
