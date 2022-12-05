@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QCompleter,
+    QStyle,
 )
 from PyQt6.QtGui import QFileSystemModel, QColor, QStandardItem, QStandardItemModel
 from PyQt6.QtCore import QDir, Qt, QModelIndex
@@ -98,7 +99,7 @@ class TagBar(QWidget):
         self.line_edit.setCompleter(self.completer)
         self.update_completer()
         self.line_edit.setPlaceholderText(
-            "Add tag(s)... Multiple tags separated by ', ' allowed."
+            "Add tag(s)... Multiple tags separated by ',' allowed."
         )
         self.line_edit.setSizePolicy(
             QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum
@@ -129,7 +130,8 @@ class TagBar(QWidget):
 
     def create_tags(self):
         if self.line_edit.text():
-            new_tags = self.line_edit.text().split(", ")
+            text = self.line_edit.text().replace(", ", ",")
+            new_tags = text.split(",")
         else:
             new_tags = []
         self.line_edit.setText("")
@@ -171,9 +173,11 @@ class TagBar(QWidget):
         label.setStyleSheet("border:0px")
         label.setFixedHeight(16)
         hbox.addWidget(label)
-        x_button = QPushButton("x")
-        x_button.setFixedSize(20, 20)
-        x_button.setStyleSheet("border:0px; font-weight:bold")
+        pixmapi = QStyle.StandardPixmap.SP_TitleBarCloseButton
+        icon = self.style().standardIcon(pixmapi)
+        x_button = QPushButton(icon, "")
+        x_button.setFixedSize(10, 10)
+        x_button.setStyleSheet("border:0px")
         x_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         x_button.clicked.connect(lambda _: self.delete_tag(text))
         hbox.addWidget(x_button)
@@ -182,6 +186,7 @@ class TagBar(QWidget):
 
     def delete_tag(self, tag_name):
         self.tags.remove(tag_name)
+        self.db.remove_paper_tags(self.curr_filepath, tag_name)
         self.refresh()
 
 

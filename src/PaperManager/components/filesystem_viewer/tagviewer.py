@@ -18,7 +18,8 @@ class TagViewer(QDockWidget):
             """
         SELECT DISTINCT Tags.name, count(paperId) AS freq 
         FROM Tags LEFT JOIN PaperTags
-        ON Tags.id=PaperTags.tagId GROUP BY Tags.id ORDER BY freq DESC"""
+        ON Tags.id=PaperTags.tagId GROUP BY Tags.id HAVING freq>0 
+        ORDER BY freq DESC"""
         )
         self.model.setHeaderData(0, Qt.Orientation.Horizontal, "Tag")
         self.model.setHeaderData(1, Qt.Orientation.Horizontal, "Freq")

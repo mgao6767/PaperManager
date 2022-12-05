@@ -76,8 +76,8 @@ class PMDatabase:
             paperId INTEGER NOT NULL,
             tagId INTEGER NOT NULL,
             PRIMARY KEY (paperId, tagId),
-            FOREIGN KEY (paperId) REFERENCES Papers(id),
-            FOREIGN KEY (tagId) REFERENCES Tags(id)
+            FOREIGN KEY (paperId) REFERENCES Papers(id) ON DELETE CASCADE,
+            FOREIGN KEY (tagId) REFERENCES Tags(id) ON DELETE CASCADE
         )
         """
         )
@@ -126,6 +126,22 @@ class PMDatabase:
                         self.paperTags[path] = list()
                     self.paperTags[path].extend(tags)
                     self.paperTags[path] = list(set(self.paperTags[path]))
+
+    def remove_paper_tags(self, paper_path: str, tag: str):
+        if paper_path not in self.paperTags:
+            return
+        self.paperTags[paper_path].remove(tag)
+        query = QSqlQuery(self.db)
+        query.prepare(
+            """
+        DELETE FROM PaperTags
+        WHERE paperId=(SELECT DISTINCT paperId FROM PaperPaths WHERE path=?)
+        AND tagId=(SELECT id FROM Tags WHERE name=?);
+        """
+        )
+        query.addBindValue(paper_path)
+        query.addBindValue(tag)
+        query.exec()
 
     def update_paper_tags(self):
         # Write cache into the database
