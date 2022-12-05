@@ -18,6 +18,7 @@ class PaperManagerApplication:
 
     def __init__(self, *args, **kwargs):
         self.app = QApplication(*args, **kwargs)
+        self.app.setStyle("Windows")
 
         # Set application icon
         app_icon = self._create_icon()
